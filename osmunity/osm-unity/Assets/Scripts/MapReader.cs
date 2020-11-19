@@ -46,71 +46,71 @@ class MapReader : MonoBehaviour
 
 
 
-        GenerateController = new ControllPoint();
-        GenerateController.sphere_m = ControllerPoints;
-        GenerateController.sphere_n = ControllerPoints;
+        //GenerateController = new ControllPoint();
+        //GenerateController.sphere_m = ControllerPoints;
+        //GenerateController.sphere_n = ControllerPoints;
 
-        //GenerateController.Spheres = new GameObject[ControllerPoints, ControllerPoints];
-        GenerateController.ControlCube = new GameObject[ControllerPoints, ControllerPoints];
+        ////GenerateController.Spheres = new GameObject[ControllerPoints, ControllerPoints];
+        //GenerateController.ControlCube = new GameObject[ControllerPoints, ControllerPoints];
 
-        int totalCount = 0;
-        double boundx = lonToX(this.bounds.MaxLon) - lonToX(this.bounds.MinLon);
-        double boundz = latToY(this.bounds.MaxLat) - latToY(this.bounds.MinLat);
+        //int totalCount = 0;
+        //double boundx = lonToX(this.bounds.MaxLon) - lonToX(this.bounds.MinLon);
+        //double boundz = latToY(this.bounds.MaxLat) - latToY(this.bounds.MinLat);
 
-        Debug.Log(boundx);
-        Debug.Log(boundz);
+        //Debug.Log(boundx);
+        //Debug.Log(boundz);
 
-        for (int i = 0; i < ControllerPoints; i++)
-        {
-            for (int j = 0; j < ControllerPoints; j++)
-            {
-                GenerateController.ControlCube[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                GenerateController.ControlCube[i, j].GetComponent<Transform>().localScale = new Vector3(10, 10, 10);
-                GenerateController.ControlCube[i, j].GetComponent<Transform>().position = new Vector3((float)(((boundx / (double)(ControllerPoints - 1))) * i - (boundx / 2)), 0, (float)(((boundz / (double)(ControllerPoints - 1))) * j - (boundz / 2)));
-                //Debug.Log(GenerateController.ControlCube[i, j].GetComponent<Transform>().position);
-            }
-        }
+        //for (int i = 0; i < ControllerPoints; i++)
+        //{
+        //    for (int j = 0; j < ControllerPoints; j++)
+        //    {
+        //        GenerateController.ControlCube[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        //        GenerateController.ControlCube[i, j].GetComponent<Transform>().localScale = new Vector3(10, 10, 10);
+        //        GenerateController.ControlCube[i, j].GetComponent<Transform>().position = new Vector3((float)(((boundx / (double)(ControllerPoints - 1))) * i - (boundx / 2)), 0, (float)(((boundz / (double)(ControllerPoints - 1))) * j - (boundz / 2)));
+        //        //Debug.Log(GenerateController.ControlCube[i, j].GetComponent<Transform>().position);
+        //    }
+        //}
 
 
-        foreach (OsmWay w in ways)
-        {
-            if (w.Visible)
-            {
-                Color c = Color.cyan; // cyan for buildings
-                if (!w.IsBoundary) c = Color.red; // red for roads
+        //foreach (OsmWay w in ways)
+        //{
+        //    if (w.Visible)
+        //    {
+        //        Color c = Color.cyan; // cyan for buildings
+        //        if (!w.IsBoundary) c = Color.red; // red for roads
 
-                for (int i = 1; i < w.NodeIDs.Count; i++)
-                {
-                    totalCount++;
-                    totalCount++;
-                }
-            }
-        }
+        //        for (int i = 1; i < w.NodeIDs.Count; i++)
+        //        {
+        //            totalCount++;
+        //            totalCount++;
+        //        }
+        //    }
+        //}
 
-        GenerateController.Spheres = new GameObject[totalCount];
-        UV = new Vector2[totalCount];
-        int buildCount = 0;
-        foreach (OsmWay w in ways)
-        {
-            if (w.Visible)
-            {
-                Color c = Color.cyan; // cyan for buildings
-                if (!w.IsBoundary) c = Color.red; // red for roads
+        //GenerateController.Spheres = new GameObject[totalCount];
+        //UV = new Vector2[totalCount];
+        //int buildCount = 0;
+        //foreach (OsmWay w in ways)
+        //{
+        //    if (w.Visible)
+        //    {
+        //        Color c = Color.cyan; // cyan for buildings
+        //        if (!w.IsBoundary) c = Color.red; // red for roads
 
-                for (int i = 1; i < w.NodeIDs.Count; i++)
-                {
-                    OsmNode p1 = nodes[w.NodeIDs[i - 1]];
-                    OsmNode p2 = nodes[w.NodeIDs[i]];
+        //        for (int i = 1; i < w.NodeIDs.Count; i++)
+        //        {
+        //            OsmNode p1 = nodes[w.NodeIDs[i - 1]];
+        //            OsmNode p2 = nodes[w.NodeIDs[i]];
 
-                    Vector3 v1 = p1 - bounds.Centre;
-                    Vector3 v2 = p2 - bounds.Centre;
-                    UV[buildCount] = new Vector2((float)((double)((v1.z) / boundz) + 0.5), (float)((double)((v1.x) / boundx) + 0.5));
-                    buildCount++;
-                    UV[buildCount] = new Vector2((float)((double)((v2.z) / boundz) + 0.5), (float)((double)((v2.x) / boundx) + 0.5));
-                    buildCount++;
-                }
-            }
-        }
+        //            Vector3 v1 = p1 - bounds.Centre;
+        //            Vector3 v2 = p2 - bounds.Centre;
+        //            UV[buildCount] = new Vector2((float)((double)((v1.z) / boundz) + 0.5), (float)((double)((v1.x) / boundx) + 0.5));
+        //            buildCount++;
+        //            UV[buildCount] = new Vector2((float)((double)((v2.z) / boundz) + 0.5), (float)((double)((v2.x) / boundx) + 0.5));
+        //            buildCount++;
+        //        }
+        //    }
+        //}
 
     }
 
@@ -141,6 +141,7 @@ class MapReader : MonoBehaviour
                     //Vector3 _p2 = P(UV[buildCount].x, UV[buildCount].y);
                     ////UV[buildCount] = new Vector2((float)((double)((v2.z) / boundz) + 0.5), (float)((double)((v2.x) / boundx) + 0.5));
                     //buildCount++;
+                    //Debug.DrawLine(_p1, _p2, c);
 
                     Debug.DrawLine(v1, v2, c);
                 }

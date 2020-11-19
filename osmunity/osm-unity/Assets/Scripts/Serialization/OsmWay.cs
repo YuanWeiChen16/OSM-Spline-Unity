@@ -52,11 +52,16 @@ class OsmWay : BaseOsm
             else if (key == "building:levels")
             {
                  Height = 3.0f * GetAttribute<float>("v", t.Attributes);
+                if (IsBuilding == false)
+                {
+                    IsBuilding = true;
+                }
             }
 
             else if (key == "building")
             {
                 IsBuilding = GetAttribute<string>("v", t.Attributes) == "yes";
+
             }
 
             else if (key == "building")
@@ -68,7 +73,11 @@ class OsmWay : BaseOsm
             {
                 IsRoad = true;
             }
-
+            else if(key == "type")
+            {
+                IsBuilding = GetAttribute<string>("v", t.Attributes) == "building";
+                Height = 10.0f;
+            }
             /** would preferably like to use only: 
             ** trunk roads
             ** primary roads
