@@ -19,14 +19,10 @@ class MapReader : MonoBehaviour
     public string resourceFile;
 
     public bool IsReady { get; private set; }
-
-
-    Vector2[] UV;
-    public ControllPoint GenerateController;
-    public int ControllerPoints = 4;
-    public int buildCount = 0;
-
-
+    
+    Vector2[] UV;   
+    int buildCount = 0;
+    Vector3[] NowPos;
     // Start is called before the first frame update
     void Start()
     {
@@ -43,35 +39,11 @@ class MapReader : MonoBehaviour
         GetWays(doc.SelectNodes("osm/way"));
 
         IsReady = true;
-
-
-
-        GenerateController = new ControllPoint();
-        GenerateController.sphere_m = ControllerPoints;
-        GenerateController.sphere_n = ControllerPoints;
-
-        //GenerateController.Spheres = new GameObject[ControllerPoints, ControllerPoints];
-        GenerateController.ControlCube = new GameObject[ControllerPoints, ControllerPoints];
-
+        
         int totalCount = 0;
         double boundx = lonToX(this.bounds.MaxLon) - lonToX(this.bounds.MinLon);
         double boundz = latToY(this.bounds.MaxLat) - latToY(this.bounds.MinLat);
-
-        Debug.Log(boundx);
-        Debug.Log(boundz);
-
-        for (int i = 0; i < ControllerPoints; i++)
-        {
-            for (int j = 0; j < ControllerPoints; j++)
-            {
-                GenerateController.ControlCube[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                GenerateController.ControlCube[i, j].GetComponent<Transform>().localScale = new Vector3(10, 10, 10);
-                GenerateController.ControlCube[i, j].GetComponent<Transform>().position = new Vector3((float)(((boundx / (double)(ControllerPoints - 1))) * i - (boundx / 2)), 0, (float)(((boundz / (double)(ControllerPoints - 1))) * j - (boundz / 2)));
-                //Debug.Log(GenerateController.ControlCube[i, j].GetComponent<Transform>().position);
-            }
-        }
-
-
+        
         foreach (OsmWay w in ways)
         {
             if (w.Visible)
@@ -86,9 +58,11 @@ class MapReader : MonoBehaviour
                 }
             }
         }
-
-        GenerateController.Spheres = new GameObject[totalCount];
+        
         UV = new Vector2[totalCount];
+        NowPos = new Vector3[totalCount];
+
+
         int buildCount = 0;
         foreach (OsmWay w in ways)
         {
@@ -105,8 +79,10 @@ class MapReader : MonoBehaviour
                     Vector3 v1 = p1 - bounds.Centre;
                     Vector3 v2 = p2 - bounds.Centre;
                     UV[buildCount] = new Vector2((float)((double)((v1.z) / boundz) + 0.5), (float)((double)((v1.x) / boundx) + 0.5));
+                    NowPos[buildCount] = v1;
                     buildCount++;
                     UV[buildCount] = new Vector2((float)((double)((v2.z) / boundz) + 0.5), (float)((double)((v2.x) / boundx) + 0.5));
+                    NowPos[buildCount] = v2;
                     buildCount++;
                 }
             }
@@ -116,7 +92,21 @@ class MapReader : MonoBehaviour
 
     void Update()
     {
-
+        Vector3[,] NCPos = this.GetComponent<BuildingMaker>().NowControlPos;
+        int CX = this.GetComponent<BuildingMaker>().ControllerPointsX;
+        int CY = this.GetComponent<BuildingMaker>().ControllerPointsY;
+        bool CPMove = false;
+        for (int i = 0; i < CX; i++)
+        {
+            for (int j = 0; j < CY; j++)
+            {
+                if ((NCPos[i, j] - this.GetComponent<BuildingMaker>().GenerateController.ControlCube[i, j].GetComponent<Transform>().position).magnitude > 0.0001)
+                {
+                    CPMove = true;
+                    NCPos[i, j] = this.GetComponent<BuildingMaker>().GenerateController.ControlCube[i, j].GetComponent<Transform>().position;
+                }
+            }
+        }        
         int buildCount = 0;
         foreach (OsmWay w in ways)
         {
@@ -127,22 +117,30 @@ class MapReader : MonoBehaviour
 
                 for (int i = 1; i < w.NodeIDs.Count; i++)
                 {
-
-                    OsmNode p1 = nodes[w.NodeIDs[i - 1]];
-                    OsmNode p2 = nodes[w.NodeIDs[i]];
-
-                    Vector3 v1 = p1 - bounds.Centre;
-                    Vector3 v2 = p2 - bounds.Centre;
-
-                    //Vector3 _p1 = P(UV[buildCount].x, UV[buildCount].y);
-
-                    ////UV[buildCount] = new Vector2((float)((double)((v1.z) / boundz) + 0.5), (float)((double)((v1.x) / boundx) + 0.5));
-                    //buildCount++;
-                    //Vector3 _p2 = P(UV[buildCount].x, UV[buildCount].y);
-                    ////UV[buildCount] = new Vector2((float)((double)((v2.z) / boundz) + 0.5), (float)((double)((v2.x) / boundx) + 0.5));
-                    //buildCount++;
-
-                    Debug.DrawLine(v1, v2, c);
+                    if (CPMove == false)
+                    {
+                        Vector3 v1 = NowPos[buildCount];
+                        buildCount++;
+                        Vector3 v2 = NowPos[buildCount];
+                        buildCount++;
+                        Debug.DrawLine(v1, v2, c);
+                    }
+                    else if (CPMove == true)
+                    {
+                        OsmNode p1 = nodes[w.NodeIDs[i - 1]];
+                        OsmNode p2 = nodes[w.NodeIDs[i]];
+                        Vector3 v1 = p1 - bounds.Centre;
+                        Vector3 v2 = p2 - bounds.Centre;
+                        Vector3 _p1 = P(UV[buildCount].x, UV[buildCount].y);
+                        //UV[buildCount] = new Vector2((float)((double)((v1.z) / boundz) + 0.5), (float)((double)((v1.x) / boundx) + 0.5));
+                        NowPos[buildCount] = _p1;
+                        buildCount++;
+                        Vector3 _p2 = P(UV[buildCount].x, UV[buildCount].y);
+                        NowPos[buildCount] = _p2;
+                        //UV[buildCount] = new Vector2((float)((double)((v2.z) / boundz) + 0.5), (float)((double)((v2.x) / boundx) + 0.5));
+                        buildCount++;                        
+                        Debug.DrawLine(_p1, _p2, c);
+                    }                    
                 }
 
             }
@@ -204,8 +202,13 @@ class MapReader : MonoBehaviour
     //compute the position of the point with (u,v) image coordinate 
     public Vector3 P(float u, float v)
     {
-        int m = GenerateController.sphere_m;
-        int n = GenerateController.sphere_n;
+        if (this.GetComponent<BuildingMaker>().GenerateController == null)
+        {
+            return new Vector3(0, 0 - 2, 0);
+        }
+        int m = this.GetComponent<BuildingMaker>().GenerateController.sphere_m;
+        int n = this.GetComponent<BuildingMaker>().GenerateController.sphere_n;
+
         float tempX = 0;
         float tempY = 0;
         float tempZ = 0;
@@ -213,9 +216,12 @@ class MapReader : MonoBehaviour
         {
             for (int k = 0; k < n; k++)
             {
-                tempX += GenerateController.ControlCube[j, k].GetComponent<Transform>().position.x * BEZ(j, m - 1, v) * BEZ(k, n - 1, u);
-                tempY += GenerateController.ControlCube[j, k].GetComponent<Transform>().position.y * BEZ(j, m - 1, v) * BEZ(k, n - 1, u);
-                tempZ += GenerateController.ControlCube[j, k].GetComponent<Transform>().position.z * BEZ(j, m - 1, v) * BEZ(k, n - 1, u);
+                if (this.GetComponent<BuildingMaker>().GenerateController.ControlCube[j, k] != null)
+                {
+                    tempX += this.GetComponent<BuildingMaker>().GenerateController.ControlCube[j, k].GetComponent<Transform>().position.x * BEZ(j, m - 1, v) * BEZ(k, n - 1, u);
+                    tempY += this.GetComponent<BuildingMaker>().GenerateController.ControlCube[j, k].GetComponent<Transform>().position.y * BEZ(j, m - 1, v) * BEZ(k, n - 1, u);
+                    tempZ += this.GetComponent<BuildingMaker>().GenerateController.ControlCube[j, k].GetComponent<Transform>().position.z * BEZ(j, m - 1, v) * BEZ(k, n - 1, u);
+                }
             }
         }
         return new Vector3(tempX, tempY - 2, tempZ);

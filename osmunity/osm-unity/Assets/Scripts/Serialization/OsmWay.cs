@@ -48,10 +48,11 @@ class OsmWay : BaseOsm
             {
                 Height = 0.3048f * GetAttribute<float>("v", t.Attributes);
             }
-            
+
             else if (key == "building:levels")
             {
-                 Height = 3.0f * GetAttribute<float>("v", t.Attributes);
+                Height = 3.0f * GetAttribute<float>("v", t.Attributes);
+                IsBuilding = true;
             }
 
             else if (key == "building")
@@ -63,7 +64,10 @@ class OsmWay : BaseOsm
             {
                 Height = 10.0f;
             }
-
+            else if (key == "type")
+            {
+                IsBuilding = GetAttribute<string>("v", t.Attributes) == "building";
+            }
             else if (key == "highway")
             {
                 IsRoad = true;

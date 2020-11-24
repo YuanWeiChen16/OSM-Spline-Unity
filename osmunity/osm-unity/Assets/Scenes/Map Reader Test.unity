@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 170076734}
-  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -152,9 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a85b096eab9582409324b760bae020b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resourceFile: map
-  ControllerPoints: 4
-  buildCount: 0
+  resourceFile: streetmap4
 --- !u!4 &108401118
 Transform:
   m_ObjectHideFlags: 0
@@ -195,7 +193,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   building: {fileID: 2100000, guid: 90cc4ee604aa1ff4f94242c9448de8b0, type: 2}
-  ControllerPoints: 4
+  ControllerPointsX: 4
+  ControllerPointsY: 2
   buildCount: 0
 --- !u!1 &170076733
 GameObject:
