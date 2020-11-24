@@ -286,9 +286,16 @@ class BuildingMaker : InfrstructureBehaviour
         int Blocky = (int)UVData.w;
 
         Vector3 BlockMid = CPointPos[Blockx, Blocky];
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
 
+
+            }
+        }
         Vector3 X = CatMullRom(GenerateController.ControlCube[Blockx, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 2, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 3, Blocky + 1].GetComponent<Transform>().position, UVData.x, alpha);
-        //Vector3 Y = CatMullRom(GenerateController.ControlCube[Blockx + 1, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 3].GetComponent<Transform>().position, UVData.y, alpha);
+        Vector3 Y = CatMullRom(GenerateController.ControlCube[Blockx + 1, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 3].GetComponent<Transform>().position, UVData.y, alpha);
 
         return (X);
     }
