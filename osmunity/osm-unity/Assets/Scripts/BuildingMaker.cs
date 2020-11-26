@@ -7,42 +7,45 @@ class BuildingMaker : InfrstructureBehaviour
 {
     public Material building;
 
-    Vector4[] UVBlock;//vector2 UV + vector2 Block 
+    //Vector4[] UVBlock;//vector2 UV + vector2 Block 
     Vector2[] UV;//vector2 UV + vector2 Block 
     public ControllPoint GenerateController;
-    public int ControllerPoints = 4; //cardinal 6
+    public int ControllerPointsX = 4;
+    public int ControllerPointsY = 2;
     public int buildCount = 0;
-    Vector3[,] CPointPos;
-
+    public float Talpha = 0.5f;
+    Vector3[] CPointPos;
+    Vector3[] NowControlPos;
+    double boundx;
+    double boundz;
     IEnumerator Start()
     {
         GenerateController = new ControllPoint();
-        GenerateController.sphere_m = 0;
-        GenerateController.sphere_n = 0;
-        CPointPos = new Vector3[ControllerPoints - 1, ControllerPoints - 1];
-        //GenerateController.Spheres = new GameObject[ControllerPoints, ControllerPoints];
-        GenerateController.ControlCube = new GameObject[ControllerPoints + 2, ControllerPoints + 2];
+        GenerateController.sphere_m = ControllerPointsX;
+        GenerateController.sphere_n = ControllerPointsY;
+        GenerateController.ControlCube = new GameObject[ControllerPointsX];
+        while (!map.IsReady)
+        {
+            yield return null;
+        }
 
         while (!map.IsReady)
         {
             yield return null;
         }
         int totalCount = 0;
-        double boundx = lonToX(map.bounds.MaxLon) - lonToX(map.bounds.MinLon);
-        double boundz = latToY(map.bounds.MaxLat) - latToY(map.bounds.MinLat);
+        boundx = lonToX(map.bounds.MaxLon) - lonToX(map.bounds.MinLon);
+        boundz = latToY(map.bounds.MaxLat) - latToY(map.bounds.MinLat);
 
         Debug.Log(boundx);
         Debug.Log(boundz);
 
-        for (int i = -1; i < ControllerPoints + 1; i++)
+        for (int i = 0; i < ControllerPointsX; i++)
         {
-            for (int j = -1; j < ControllerPoints + 1; j++)
-            {
-                GenerateController.ControlCube[i + 1, j + 1] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                GenerateController.ControlCube[i + 1, j + 1].GetComponent<Transform>().localScale = new Vector3(10, 10, 10);
-                GenerateController.ControlCube[i + 1, j + 1].GetComponent<Transform>().position = new Vector3((float)(((boundx / (double)(ControllerPoints - 1))) * i - (boundx / 2)), 0, (float)(((boundz / (double)(ControllerPoints - 1))) * j - (boundz / 2)));
-                //Debug.Log(GenerateController.ControlCube[i, j].GetComponent<Transform>().position);
-            }
+            GenerateController.ControlCube[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GenerateController.ControlCube[i].GetComponent<Transform>().localScale = new Vector3(50, 50, 50);
+            GenerateController.ControlCube[i].GetComponent<Transform>().position = new Vector3((float)((boundx) * i - (boundx / 2) * 3), 0, 0);
+
         }
 
 
@@ -52,25 +55,25 @@ class BuildingMaker : InfrstructureBehaviour
         }
 
         GenerateController.Spheres = new GameObject[totalCount];
-        UVBlock = new Vector4[totalCount];
+        //UVBlock = new Vector4[totalCount];
         UV = new Vector2[totalCount];
 
 
-        for (int i = 1; i < ControllerPoints; i++)
-        {
-            for (int j = 1; j < ControllerPoints; j++)
-            {
-                Vector3 total = new Vector3(0, 0, 0);
-                total += GenerateController.ControlCube[i, j].GetComponent<Transform>().position;
-                total += GenerateController.ControlCube[i, j + 1].GetComponent<Transform>().position;
-                total += GenerateController.ControlCube[i + 1, j].GetComponent<Transform>().position;
-                total += GenerateController.ControlCube[i + 1, j + 1].GetComponent<Transform>().position;
-                total /= 4.0f;
+        //for (int i = 1; i < ControllerPointsX; i++)
+        //{
+        //    for (int j = 1; j < ControllerPointsY; j++)
+        //    {
+        //        Vector3 total = new Vector3(0, 0, 0);
+        //        total += GenerateController.ControlCube[i, j].GetComponent<Transform>().position;
+        //        total += GenerateController.ControlCube[i, j + 1].GetComponent<Transform>().position;
+        //        total += GenerateController.ControlCube[i + 1, j].GetComponent<Transform>().position;
+        //        total += GenerateController.ControlCube[i + 1, j + 1].GetComponent<Transform>().position;
+        //        total /= 4.0f;
 
-                CPointPos[i - 1, j - 1] = total;
+        //        CPointPos[i - 1, j - 1] = total;
 
-            }
-        }
+        //    }
+        //}
 
 
         foreach (var way in map.ways.FindAll((w) => { return w.IsBuilding && w.NodeIDs.Count > 1; }))
@@ -86,31 +89,39 @@ class BuildingMaker : InfrstructureBehaviour
             GenerateController.Spheres[buildCount].transform.position = BuildPos;
 
 
-            Vector2 Blockij = new Vector2();
-            float ShortDisWCPoint = 100000000.0f;
-            for (int i = 0; i < ControllerPoints - 1; i++)
-            {
-                for (int j = 0; j < ControllerPoints - 1; j++)
-                {
-                    if (ShortDisWCPoint > (BuildPos - CPointPos[i, j]).magnitude)
-                    {
-                        Blockij = new Vector2(i, j);
-                        ShortDisWCPoint = (BuildPos - CPointPos[i, j]).magnitude;
-                    }
-                }
-            }
+            //Vector2 Blockij = new Vector2();
+            //float ShortDisWCPoint = 100000000.0f;
+            //for (int i = 0; i < ControllerPointsX - 1; i++)
+            //{
+            //    for (int j = 0; j < ControllerPointsY - 1; j++)
+            //    {
+            //        if (ShortDisWCPoint > (BuildPos - CPointPos[i, j]).magnitude)
+            //        {
+            //            Blockij = new Vector2(i, j);
+            //            ShortDisWCPoint = (BuildPos - CPointPos[i, j]).magnitude;
+            //        }
+            //    }
+            //}
 
             //set uv (0~1)
             //UVBlock[buildCount] = new Vector4((float)((double)((BuildPos.x - CPointPos[(int)Blockij.x, (int)Blockij.y].x) / (boundx /4.0f))) + 0.5f, (float)((double)((BuildPos.z - CPointPos[(int)Blockij.x, (int)Blockij.y].z) / (boundz / 4.0f))) + 0.5f, Blockij.x, Blockij.y);
-            UVBlock[buildCount] = new Vector4((float)(BuildPos.x / boundx) + 0.5f, (float)(BuildPos.z / boundz) + 0.5f, 0, 0);
+            //UVBlock[buildCount] = new Vector4((float)(BuildPos.x / boundx) + 0.5f, (float)(BuildPos.z / boundz) + 0.5f, 0, 0);
             //UVBlock[buildCount] = new Vector4(0.5f, 0, 1, 1);
 
-            Debug.Log(UVBlock[buildCount]);
+            UV[buildCount].x = BuildPos.x / (float)boundx + 0.5f;
+            UV[buildCount].y = BuildPos.z / (float)boundz;
+
+            Debug.Log(UV[buildCount]);
 
             MeshFilter mf = GenerateController.Spheres[buildCount].AddComponent<MeshFilter>();
             MeshRenderer mr = GenerateController.Spheres[buildCount].AddComponent<MeshRenderer>();
 
-            mr.material = building;
+            mr.material.shader = Shader.Find("Standard");
+            Color tempC = new Color();
+            tempC.r = 0.15f * (float)(buildCount % 7);
+            tempC.g = 0.25f * (float)(buildCount % 5);
+            tempC.b = 0.12f * (float)(buildCount % 9);
+            mr.material.color = tempC;
 
             List<Vector3> vectors = new List<Vector3>();
             List<Vector3> normals = new List<Vector3>();
@@ -214,11 +225,26 @@ class BuildingMaker : InfrstructureBehaviour
         //for each uv
         for (int i = 0; i < buildCount; i++)
         {
-            Vector3 _p = P(UVBlock[i]);
+            Vector3 _p = P(UV[i]);
+            Vector3 _p2 = P(new Vector2(UV[i].x + 0.01f, UV[i].y));
 
+            _p2 = _p2 - _p;
+            _p2.Normalize();
             if (GenerateController.Spheres[i] != null)
             {
-                GenerateController.Spheres[i].GetComponent<Transform>().position = _p;
+                Vector3 R = Vector3.Cross(_p2, new Vector3(0, 1, 0));
+                R.Normalize();
+
+                R = (float)(UV[i].y * boundz) * R;
+
+                GenerateController.Spheres[i].GetComponent<Transform>().position = _p + R;
+
+                if (UV[i].y < 0)
+                {
+                    R = -R;
+                }
+                GenerateController.Spheres[i].GetComponent<Transform>().rotation = Quaternion.LookRotation(R, new Vector3(0, 1, 0));
+
             }
         }
     }
@@ -251,9 +277,7 @@ class BuildingMaker : InfrstructureBehaviour
         float result = Combin(n, k) * Mathf.Pow(u, k) * Mathf.Pow(1 - u, n - k);
         return result;
     }
-
-
-
+    
     public float GetT(float t, float alpha, Vector3 p0, Vector3 p1)
     {
         Vector3 d = p1 - p0;
@@ -279,25 +303,42 @@ class BuildingMaker : InfrstructureBehaviour
     }
 
     //compute the position of the point with (u,v) image coordinate 
-    public Vector3 P(Vector4 UVData)
+    public Vector3 P(Vector2 UVData)
     {
-        float alpha = 0f;
-        int Blockx = (int)UVData.z;
-        int Blocky = (int)UVData.w;
+        float alpha = 0.5f;
+        //int Blockx = (int)UVData.z;
+        //int Blocky = (int)UVData.w;
 
-        Vector3 BlockMid = CPointPos[Blockx, Blocky];
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
+        //Vector3 BlockMid = CPointPos[Blockx, Blocky];
+
+        Vector3 X1 = CatMullRom(GenerateController.ControlCube[0].GetComponent<Transform>().position, GenerateController.ControlCube[1].GetComponent<Transform>().position, GenerateController.ControlCube[2].GetComponent<Transform>().position, GenerateController.ControlCube[3].GetComponent<Transform>().position, UVData.x, Talpha);
+        //Vector3 X2 = CatMullRom(GenerateController.ControlCube[0].GetComponent<Transform>().position, GenerateController.ControlCube[1].GetComponent<Transform>().position, GenerateController.ControlCube[2].GetComponent<Transform>().position, GenerateController.ControlCube[3].GetComponent<Transform>().position, UVData.x, alpha);
+
+        //Vector3 Y = CatMullRom(GenerateController.ControlCube[Blockx + 1, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 3].GetComponent<Transform>().position, UVData.y, alpha);
 
 
-            }
-        }
-        Vector3 X = CatMullRom(GenerateController.ControlCube[Blockx, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 2, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 3, Blocky + 1].GetComponent<Transform>().position, UVData.x, alpha);
-        Vector3 Y = CatMullRom(GenerateController.ControlCube[Blockx + 1, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 3].GetComponent<Transform>().position, UVData.y, alpha);
+        //Vector3 TX = new Vector3(0, 0, 0);
+        //Vector3 TY = new Vector3(0, 0, 0);
+        ////Vector3 TZ = new Vector3(0, 0, 0);
+        //for (int i = 0; i < 4; i++)
+        //{
+        //    for (int j = 0; j < 4; j++)
+        //    {
+        //        TX += CatMullRom(GenerateController.ControlCube[Blockx, Blocky + j].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + j].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 2, Blocky + j].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 3, Blocky + j].GetComponent<Transform>().position, UVData.x, alpha);
+        //        TY += CatMullRom(GenerateController.ControlCube[Blockx + i, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + i, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + i, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + i, Blocky + 3].GetComponent<Transform>().position, UVData.x, alpha);
+        //    }
+        //}
 
-        return (X);
+        //Debug.Log("TX");
+        //Debug.Log(TX);
+        //Debug.Log("TY");
+        //Debug.Log(TY);
+
+
+        //TX += TY;
+
+
+        return (X1);
     }
 
 
