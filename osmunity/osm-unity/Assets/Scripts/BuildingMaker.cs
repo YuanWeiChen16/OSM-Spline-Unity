@@ -14,6 +14,10 @@ class BuildingMaker : InfrstructureBehaviour
     public int ControllerPointsY = 2;
     public int buildCount = 0;
     public float Talpha = 0.5f;
+
+    public float normalP = 1.0f;
+
+
     Vector3[] CPointPos;
     Vector3[] NowControlPos;
     double boundx;
@@ -45,7 +49,7 @@ class BuildingMaker : InfrstructureBehaviour
             GenerateController.ControlCube[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             GenerateController.ControlCube[i].GetComponent<Transform>().localScale = new Vector3(50, 50, 50);
             GenerateController.ControlCube[i].GetComponent<Transform>().position = new Vector3((float)((boundx) * i - (boundx / 2) * 3), 0, 0);
-
+            GenerateController.ControlCube[i].GetComponent<MeshRenderer>().material.color = Color.blue;
         }
 
 
@@ -74,14 +78,17 @@ class BuildingMaker : InfrstructureBehaviour
 
         //    }
         //}
-
+        GameObject tmep = new GameObject();
+        tmep.name = "Model";
 
         foreach (var way in map.ways.FindAll((w) => { return w.IsBuilding && w.NodeIDs.Count > 1; }))
         {
 
             //GenerateController.Spheres[0,0] = new GameObject();
             GenerateController.Spheres[buildCount] = new GameObject();
-            GenerateController.Spheres[buildCount].name = "Way";
+            GenerateController.Spheres[buildCount].transform.parent = tmep.transform;
+
+            GenerateController.Spheres[buildCount].name = "Way_" + buildCount;
             Vector3 localOrigin = GetCentre(way);
             //Debug.Log(localOrigin);
             //Debug.Log(map.bounds.Centre);
@@ -111,12 +118,12 @@ class BuildingMaker : InfrstructureBehaviour
             UV[buildCount].x = BuildPos.x / (float)boundx + 0.5f;
             UV[buildCount].y = BuildPos.z / (float)boundz;
 
-            Debug.Log(UV[buildCount]);
+            //Debug.Log(UV[buildCount]);
 
             MeshFilter mf = GenerateController.Spheres[buildCount].AddComponent<MeshFilter>();
             MeshRenderer mr = GenerateController.Spheres[buildCount].AddComponent<MeshRenderer>();
 
-            mr.material.shader = Shader.Find("Standard");
+            mr.material.shader = Shader.Find("Custom/NewSurfaceShader");
             Color tempC = new Color();
             tempC.r = 0.15f * (float)(buildCount % 7);
             tempC.g = 0.25f * (float)(buildCount % 5);
@@ -131,88 +138,55 @@ class BuildingMaker : InfrstructureBehaviour
             {
                 he = 1.0f;
             }
+            int WayNodeCount = way.NodeIDs.Count;
 
-            for (int i = 1; i < way.NodeIDs.Count; i++)
+
+            for (int i = 0; i < WayNodeCount; i++)
             {
-                OsmNode p1 = map.nodes[way.NodeIDs[i - 1]];
-                OsmNode p2 = map.nodes[way.NodeIDs[i]];
-
+                OsmNode p1 = map.nodes[way.NodeIDs[i]];
                 Vector3 v1 = p1 - localOrigin;
-                Vector3 v2 = p2 - localOrigin;
-
-
-                Vector3 v3 = v1 + new Vector3(0, he, 0);
-                Vector3 v4 = v2 + new Vector3(0, he, 0);
-
                 vectors.Add(v1);
-                vectors.Add(v2);
-                vectors.Add(v3);
-                vectors.Add(v4);
-
-                normals.Add(-Vector3.forward);
-                normals.Add(-Vector3.forward);
-                normals.Add(-Vector3.forward);
-                normals.Add(-Vector3.forward);
-
-                // index values
-                int idx1, idx2, idx3, idx4;
-                idx4 = vectors.Count - 1;
-                idx3 = vectors.Count - 2;
-                idx2 = vectors.Count - 3;
-                idx1 = vectors.Count - 4;
-
-                // first triangle v1, v3, v2
-                indices.Add(idx1);
-                indices.Add(idx3);
-                indices.Add(idx2);
-
-                // second triangle v3, v4, v2
-                indices.Add(idx3);
-                indices.Add(idx4);
-                indices.Add(idx2);
-
-                // third triangle v2, v3, v1
-                indices.Add(idx2);
-                indices.Add(idx3);
-                indices.Add(idx1);
-
-                // fourth triangle v2, v4, v3
-                indices.Add(idx2);
-                indices.Add(idx4);
-                indices.Add(idx3);
+                normals.Add(v1.normalized);
             }
 
-            Vector3 vv1 = new Vector3(0, he, 0);
-            vectors.Add(vv1);
-            normals.Add(-Vector3.forward);
-            int mididx = vectors.Count - 1;
-
-            for (int i = 0; i < way.NodeIDs.Count; i++)
+            for (int i = 0; i < WayNodeCount; i++)
             {
-                OsmNode p1 = map.nodes[way.NodeIDs[(i) % way.NodeIDs.Count]];
-                OsmNode p2 = map.nodes[way.NodeIDs[(i + 1) % way.NodeIDs.Count]];
-
-                Vector3 v2 = p1 - localOrigin + new Vector3(0, way.Height, 0);
-                Vector3 v3 = p2 - localOrigin + new Vector3(0, way.Height, 0);
-
-                vectors.Add(v2);
+                OsmNode p1 = map.nodes[way.NodeIDs[i]];
+                Vector3 v1 = p1 - localOrigin;
+                Vector3 v3 = v1 + new Vector3(0, he, 0);
                 vectors.Add(v3);
+                normals.Add(v3.normalized);
+            }
 
-                normals.Add(-Vector3.forward);
-                normals.Add(-Vector3.forward);
-                int idx3, idx4;
 
-                idx4 = vectors.Count - 1;
-                idx3 = vectors.Count - 2;
 
-                indices.Add(idx4);
+            for (int i = 0; i < WayNodeCount; i++)
+            {
+                // index values
+                int idx1, idx2, idx3, idx4;
+                idx1 = i % WayNodeCount;
+                idx2 = (i + 1) % WayNodeCount;
+                idx3 = (i) % WayNodeCount + WayNodeCount;
+                idx4 = (i + 1) % WayNodeCount + WayNodeCount;
+
+                // first triangle v1, v3, v2
                 indices.Add(idx3);
-                indices.Add(mididx);
+                indices.Add(idx2);
+                indices.Add(idx1);
+
+                // second triangle v3, v4, v2
+                indices.Add(idx2);
+                indices.Add(idx3);
+                indices.Add(idx4);
+
             }
 
             mf.mesh.vertices = vectors.ToArray();
-            mf.mesh.normals = normals.ToArray();
             mf.mesh.triangles = indices.ToArray();
+            mf.mesh.RecalculateNormals();
+
+
+
             buildCount = buildCount + 1;
             yield return null;
         }
@@ -232,12 +206,20 @@ class BuildingMaker : InfrstructureBehaviour
             _p2.Normalize();
             if (GenerateController.Spheres[i] != null)
             {
+                Vector3 MidR;
                 Vector3 R = Vector3.Cross(_p2, new Vector3(0, 1, 0));
                 R.Normalize();
 
+                float temp = normalP;
+                if (UV[i].y < 0)
+                {
+                    temp = -temp;
+                }
+                MidR = temp * R;
+
                 R = (float)(UV[i].y * boundz) * R;
 
-                GenerateController.Spheres[i].GetComponent<Transform>().position = _p + R;
+                GenerateController.Spheres[i].GetComponent<Transform>().position = _p + R + MidR;
 
                 if (UV[i].y < 0)
                 {
@@ -277,7 +259,7 @@ class BuildingMaker : InfrstructureBehaviour
         float result = Combin(n, k) * Mathf.Pow(u, k) * Mathf.Pow(1 - u, n - k);
         return result;
     }
-    
+
     public float GetT(float t, float alpha, Vector3 p0, Vector3 p1)
     {
         Vector3 d = p1 - p0;
@@ -306,42 +288,9 @@ class BuildingMaker : InfrstructureBehaviour
     public Vector3 P(Vector2 UVData)
     {
         float alpha = 0.5f;
-        //int Blockx = (int)UVData.z;
-        //int Blocky = (int)UVData.w;
-
-        //Vector3 BlockMid = CPointPos[Blockx, Blocky];
-
         Vector3 X1 = CatMullRom(GenerateController.ControlCube[0].GetComponent<Transform>().position, GenerateController.ControlCube[1].GetComponent<Transform>().position, GenerateController.ControlCube[2].GetComponent<Transform>().position, GenerateController.ControlCube[3].GetComponent<Transform>().position, UVData.x, Talpha);
-        //Vector3 X2 = CatMullRom(GenerateController.ControlCube[0].GetComponent<Transform>().position, GenerateController.ControlCube[1].GetComponent<Transform>().position, GenerateController.ControlCube[2].GetComponent<Transform>().position, GenerateController.ControlCube[3].GetComponent<Transform>().position, UVData.x, alpha);
-
-        //Vector3 Y = CatMullRom(GenerateController.ControlCube[Blockx + 1, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + 3].GetComponent<Transform>().position, UVData.y, alpha);
-
-
-        //Vector3 TX = new Vector3(0, 0, 0);
-        //Vector3 TY = new Vector3(0, 0, 0);
-        ////Vector3 TZ = new Vector3(0, 0, 0);
-        //for (int i = 0; i < 4; i++)
-        //{
-        //    for (int j = 0; j < 4; j++)
-        //    {
-        //        TX += CatMullRom(GenerateController.ControlCube[Blockx, Blocky + j].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 1, Blocky + j].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 2, Blocky + j].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + 3, Blocky + j].GetComponent<Transform>().position, UVData.x, alpha);
-        //        TY += CatMullRom(GenerateController.ControlCube[Blockx + i, Blocky].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + i, Blocky + 1].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + i, Blocky + 2].GetComponent<Transform>().position, GenerateController.ControlCube[Blockx + i, Blocky + 3].GetComponent<Transform>().position, UVData.x, alpha);
-        //    }
-        //}
-
-        //Debug.Log("TX");
-        //Debug.Log(TX);
-        //Debug.Log("TY");
-        //Debug.Log(TY);
-
-
-        //TX += TY;
-
-
         return (X1);
     }
-
-
 
     private void OnDrawGizmos()
     {

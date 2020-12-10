@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: repeat_ud01_rain
+  m_Shader: {fileID: 4800000, guid: 9c5741246933a3148a684792dc5625d7, type: 3}
+  m_ShaderKeywords: []
+  m_CustomRenderQueue: -1
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 20ce0e04bcdb8124d8f8c70cecada3a6, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _BumpMap
+        second:
+          m_Texture: {fileID: 2800000, guid: 54d6b07fa3861e64ab1726e8fdbe6665, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _ComplexTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 269d678ffbc4c3643a2290133ef4fdda, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _NoiseMap
+        second:
+          m_Texture: {fileID: 2800000, guid: 60fb889a5056eb140be5be9ae7504538, type: 3}
+          m_Scale: {x: .200000003, y: .5}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _RefMask
+        second:
+          m_Texture: {fileID: 2800000, guid: d83de399c751360468f724a5a634e2d4, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _CubeMap
+        second:
+          m_Texture: {fileID: 8900000, guid: a4b0904d012c26e4c9ef8d91d76ca9f3, type: 2}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Shininess
+        second: .273474813
+      data:
+        first:
+          name: _TintValue
+        second: 1
+      data:
+        first:
+          name: _GlossValue
+        second: 1
+      data:
+        first:
+          name: _RefIntensity
+        second: 3
+      data:
+        first:
+          name: _CubeMapIntensity
+        second: .5
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: .627451003, g: .666666687, b: .745098054, a: 1}
+      data:
+        first:
+          name: _TintColor
+        second: {r: .5, g: .5, b: .5, a: 1}
