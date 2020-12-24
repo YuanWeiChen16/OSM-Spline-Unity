@@ -10,6 +10,14 @@ class BuildingMaker : InfrstructureBehaviour
     //Vector4[] UVBlock;//vector2 UV + vector2 Block 
     Vector2[] UV;//vector2 UV + vector2 Block 
     public ControllPoint GenerateController;
+
+    public GameObject CP1;
+    public GameObject CP2;
+    public GameObject CP3;
+    public GameObject CP4;
+
+
+
     public int ControllerPointsX = 4;
     public int ControllerPointsY = 2;
     public int buildCount = 0;
@@ -44,14 +52,17 @@ class BuildingMaker : InfrstructureBehaviour
         Debug.Log(boundx);
         Debug.Log(boundz);
 
-        for (int i = 0; i < ControllerPointsX; i++)
-        {
-            GenerateController.ControlCube[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            GenerateController.ControlCube[i].GetComponent<Transform>().localScale = new Vector3(50, 50, 50);
-            GenerateController.ControlCube[i].GetComponent<Transform>().position = new Vector3((float)((boundx) * i - (boundx / 2) * 3), 0, 0);
-            GenerateController.ControlCube[i].GetComponent<MeshRenderer>().material.color = Color.blue;
-        }
-
+        //for (int i = 0; i < ControllerPointsX; i++)
+        //{
+        //    GenerateController.ControlCube[i] = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //    GenerateController.ControlCube[i].GetComponent<Transform>().localScale = new Vector3(50, 50, 50);
+        //    GenerateController.ControlCube[i].GetComponent<Transform>().position = new Vector3((float)((boundx) * i - (boundx / 2) * 3), 0, 0);
+        //    GenerateController.ControlCube[i].GetComponent<MeshRenderer>().material.color = Color.blue;
+        //}
+        GenerateController.ControlCube[0] = CP1;
+        GenerateController.ControlCube[1] = CP2;
+        GenerateController.ControlCube[2] = CP3;
+        GenerateController.ControlCube[3] = CP4;
 
         foreach (var way in map.ways.FindAll((w) => { return w.IsBuilding && w.NodeIDs.Count > 1; }))
         {
@@ -293,20 +304,16 @@ class BuildingMaker : InfrstructureBehaviour
     }
 
     private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        //for (int i = 0; i < 99; i++)
-        //{
-        //    Vector3 X1 = CatMullRom(GenerateController.ControlCube[0, 0 + 1].GetComponent<Transform>().position, GenerateController.ControlCube[0 + 1, 0 + 1].GetComponent<Transform>().position, GenerateController.ControlCube[0 + 2, 0 + 1].GetComponent<Transform>().position, GenerateController.ControlCube[0 + 3, 0 + 1].GetComponent<Transform>().position, 0.01f * (float)i, 0.5f);
-        //    Vector3 X2 = CatMullRom(GenerateController.ControlCube[0, 0 + 1].GetComponent<Transform>().position, GenerateController.ControlCube[0 + 1, 0 + 1].GetComponent<Transform>().position, GenerateController.ControlCube[0 + 2, 0 + 1].GetComponent<Transform>().position, GenerateController.ControlCube[0 + 3, 0 + 1].GetComponent<Transform>().position, 0.01f * (float)(i + 1), 0.5f);
-        //    Gizmos.DrawLine(X1, X2);
-        //}
-        //for (int i = 1; i < ControllerPoints; i++)
-        //{
-        //    for (int j = 1; j < ControllerPoints; j++)
-        //    {
-        //        Gizmos.DrawCube(CPointPos[i - 1, j - 1], new Vector3(10, 100, 10));
-        //    }
-        //}
+    {  
+        Gizmos.color = Color.yellow;
+        Vector3 P1 = CP1.GetComponent<Transform>().position;
+        Vector3 P2 = CP2.GetComponent<Transform>().position;
+        Vector3 P3 = CP3.GetComponent<Transform>().position;
+        Vector3 P4 = CP4.GetComponent<Transform>().position;
+
+        for (int i = 0; i < 99; i++)
+        {
+            Gizmos.DrawLine(CatMullRom(P1, P2, P3, P4, (1.0f / 100.0f) * (float)i, Talpha), CatMullRom(P1, P2, P3, P4, (1.0f / 100.0f) * (float)(i + 1.0f), Talpha));
+        }
     }
 }

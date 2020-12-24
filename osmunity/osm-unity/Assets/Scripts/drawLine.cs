@@ -27,9 +27,7 @@ public class drawLine : MonoBehaviour
         Vector3 P2 = CP2.position;
         Vector3 P3 = CP3.position;
         Vector3 P4 = CP4.position;
-
-
-
+        
         for (int i = 0; i < 99; i++)
         {
             Gizmos.DrawLine(CatMullRom(P1, P2, P3, P4, (1.0f / 100.0f) * (float)i, Tans), CatMullRom(P1, P2, P3, P4, (1.0f / 100.0f) * (float)(i + 1.0f), Tans));
