@@ -25,6 +25,7 @@ class BuildingMaker : InfrstructureBehaviour
 
     public float normalP = 1.0f;
 
+    public float CutX = 1.0f;
 
     Vector3[] CPointPos;
     Vector3[] NowControlPos;
@@ -98,6 +99,7 @@ class BuildingMaker : InfrstructureBehaviour
             //GenerateController.Spheres[0,0] = new GameObject();
             GenerateController.Spheres[buildCount] = new GameObject();
             GenerateController.Spheres[buildCount].transform.parent = tmep.transform;
+
 
             GenerateController.Spheres[buildCount].name = "Way_" + buildCount;
             Vector3 localOrigin = GetCentre(way);
@@ -197,7 +199,13 @@ class BuildingMaker : InfrstructureBehaviour
             mf.mesh.RecalculateNormals();
 
 
+            GenerateController.Spheres[buildCount].AddComponent<BoxCollider>();
+            GenerateController.Spheres[buildCount].AddComponent<Rigidbody>();
+            GenerateController.Spheres[buildCount].GetComponent<Rigidbody>().freezeRotation = true;
+            
+            GenerateController.Spheres[buildCount].AddComponent<coliderMix>();
 
+            GenerateController.Spheres[buildCount].GetComponent<coliderMix>().OrgColor = tempC;
             buildCount = buildCount + 1;
             yield return null;
         }
@@ -210,33 +218,48 @@ class BuildingMaker : InfrstructureBehaviour
         //for each uv
         for (int i = 0; i < buildCount; i++)
         {
-            Vector3 _p = P(UV[i]);
-            Vector3 _p2 = P(new Vector2(UV[i].x + 0.01f, UV[i].y));
+            float Mx = CutX * UV[i].x;
 
-            _p2 = _p2 - _p;
-            _p2.Normalize();
-            if (GenerateController.Spheres[i] != null)
+            if (Mx > 1)
             {
-                Vector3 MidR;
-                Vector3 R = Vector3.Cross(_p2, new Vector3(0, 1, 0));
-                R.Normalize();
+                GenerateController.Spheres[i].SetActive(false);
 
-                float temp = normalP;
-                if (UV[i].y < 0)
+
+            }
+            else
+            {
+                GenerateController.Spheres[i].SetActive(true);
+
+
+                Vector3 _p = P(new Vector2(Mx, UV[i].y));
+                Vector3 _p2 = P(new Vector2(Mx + 0.01f, UV[i].y));
+
+                _p2 = _p2 - _p;
+                _p2.Normalize();
+                if (GenerateController.Spheres[i] != null)
                 {
-                    temp = -temp;
+                    Vector3 MidR;
+                    Vector3 R = Vector3.Cross(_p2, new Vector3(0, 1, 0));
+                    R.Normalize();
+
+                    float temp = normalP;
+                    if (UV[i].y < 0)
+                    {
+                        temp = -temp;
+                    }
+                    MidR = temp * R;
+
+                    R = (float)(UV[i].y * boundz) * R;
+
+                    GenerateController.Spheres[i].GetComponent<Transform>().position = _p + R + MidR;
+
+                    if (UV[i].y < 0)
+                    {
+                        R = -R;
+                    }
+                    GenerateController.Spheres[i].GetComponent<Transform>().rotation = Quaternion.LookRotation(R, new Vector3(0, 1, 0));
+
                 }
-                MidR = temp * R;
-
-                R = (float)(UV[i].y * boundz) * R;
-
-                GenerateController.Spheres[i].GetComponent<Transform>().position = _p + R + MidR;
-
-                if (UV[i].y < 0)
-                {
-                    R = -R;
-                }
-                GenerateController.Spheres[i].GetComponent<Transform>().rotation = Quaternion.LookRotation(R, new Vector3(0, 1, 0));
 
             }
         }
@@ -304,7 +327,7 @@ class BuildingMaker : InfrstructureBehaviour
     }
 
     private void OnDrawGizmos()
-    {  
+    {
         Gizmos.color = Color.yellow;
         Vector3 P1 = CP1.GetComponent<Transform>().position;
         Vector3 P2 = CP2.GetComponent<Transform>().position;
