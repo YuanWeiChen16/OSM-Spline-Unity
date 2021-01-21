@@ -1,10 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
+using System.IO;
+using UnityEngine.Profiling;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 using static MercatorProjection;
 
 class BuildingMaker : InfrstructureBehaviour
 {
+
+    [DllImport("FillHole", CharSet = CharSet.Ansi)]
+    private static extern int FH([MarshalAs(UnmanagedType.LPStr)]string fliename);
+
     public Material building;
 
     //Vector4[] UVBlock;//vector2 UV + vector2 Block 
@@ -15,8 +24,6 @@ class BuildingMaker : InfrstructureBehaviour
     public GameObject CP2;
     public GameObject CP3;
     public GameObject CP4;
-
-
 
     public int ControllerPointsX = 4;
     public int ControllerPointsY = 2;
@@ -50,8 +57,8 @@ class BuildingMaker : InfrstructureBehaviour
         boundx = lonToX(map.bounds.MaxLon) - lonToX(map.bounds.MinLon);
         boundz = latToY(map.bounds.MaxLat) - latToY(map.bounds.MinLat);
 
-        Debug.Log(boundx);
-        Debug.Log(boundz);
+        UnityEngine.Debug.Log(boundx);
+        UnityEngine.Debug.Log(boundz);
 
         //for (int i = 0; i < ControllerPointsX; i++)
         //{
@@ -108,26 +115,6 @@ class BuildingMaker : InfrstructureBehaviour
             Vector3 BuildPos = localOrigin - map.bounds.Centre;
             GenerateController.Spheres[buildCount].transform.position = BuildPos;
 
-
-            //Vector2 Blockij = new Vector2();
-            //float ShortDisWCPoint = 100000000.0f;
-            //for (int i = 0; i < ControllerPointsX - 1; i++)
-            //{
-            //    for (int j = 0; j < ControllerPointsY - 1; j++)
-            //    {
-            //        if (ShortDisWCPoint > (BuildPos - CPointPos[i, j]).magnitude)
-            //        {
-            //            Blockij = new Vector2(i, j);
-            //            ShortDisWCPoint = (BuildPos - CPointPos[i, j]).magnitude;
-            //        }
-            //    }
-            //}
-
-            //set uv (0~1)
-            //UVBlock[buildCount] = new Vector4((float)((double)((BuildPos.x - CPointPos[(int)Blockij.x, (int)Blockij.y].x) / (boundx /4.0f))) + 0.5f, (float)((double)((BuildPos.z - CPointPos[(int)Blockij.x, (int)Blockij.y].z) / (boundz / 4.0f))) + 0.5f, Blockij.x, Blockij.y);
-            //UVBlock[buildCount] = new Vector4((float)(BuildPos.x / boundx) + 0.5f, (float)(BuildPos.z / boundz) + 0.5f, 0, 0);
-            //UVBlock[buildCount] = new Vector4(0.5f, 0, 1, 1);
-
             UV[buildCount].x = BuildPos.x / (float)boundx + 0.5f;
             UV[buildCount].y = BuildPos.z / (float)boundz;
 
@@ -136,7 +123,7 @@ class BuildingMaker : InfrstructureBehaviour
             MeshFilter mf = GenerateController.Spheres[buildCount].AddComponent<MeshFilter>();
             MeshRenderer mr = GenerateController.Spheres[buildCount].AddComponent<MeshRenderer>();
 
-            mr.material.shader = Shader.Find("Custom/NewSurfaceShader");
+            mr.material.shader = Shader.Find("Standard");
             Color tempC = new Color();
             tempC.r = 0.15f * (float)(buildCount % 7);
             tempC.g = 0.25f * (float)(buildCount % 5);
@@ -153,24 +140,64 @@ class BuildingMaker : InfrstructureBehaviour
             }
             int WayNodeCount = way.NodeIDs.Count;
 
+            //turn shape to nClock
+
+            //find X Max 
+            int MaxXID = -1;
+            float MaxX = -1;
 
             for (int i = 0; i < WayNodeCount; i++)
             {
                 OsmNode p1 = map.nodes[way.NodeIDs[i]];
                 Vector3 v1 = p1 - localOrigin;
-                vectors.Add(v1);
-                normals.Add(v1.normalized);
+                if (MaxX < v1.x)
+                {
+                    MaxXID = i;
+                    MaxX = v1.x;
+                }
+            }
+            // find last one of Max Point
+            int LMaxXID = (MaxXID + 1) % WayNodeCount;
+            //two vertex cross
+            OsmNode PNow = map.nodes[way.NodeIDs[MaxXID]];
+            Vector3 VNow = PNow - localOrigin;
+            OsmNode PLast = map.nodes[way.NodeIDs[LMaxXID]];
+            Vector3 VLast = PLast - localOrigin;
+            //Pos to Right Neg to Wrong
+            float VCross = VNow.x * VLast.z - VNow.z * VLast.x;
+            //Right Point sList
+            Vector3[] PointList = new Vector3[WayNodeCount];
+            if (VCross > 0)
+            {
+                for (int i = 0; i < WayNodeCount; i++)
+                {
+                    OsmNode p1 = map.nodes[way.NodeIDs[i]];
+                    PointList[i] = p1 - localOrigin;
+                }
+            }
+            else
+            {
+
+                for (int i = 0; i < WayNodeCount; i++)
+                {
+                    OsmNode p1 = map.nodes[way.NodeIDs[(WayNodeCount - 1) - i]];
+                    PointList[i] = p1 - localOrigin;
+                }
             }
 
+            // lower Point Ring
             for (int i = 0; i < WayNodeCount; i++)
             {
-                OsmNode p1 = map.nodes[way.NodeIDs[i]];
-                Vector3 v1 = p1 - localOrigin;
-                Vector3 v3 = v1 + new Vector3(0, he, 0);
+                vectors.Add(PointList[i]);
+                normals.Add(PointList[i].normalized);
+            }
+            // Upper Point Ring
+            for (int i = 0; i < WayNodeCount; i++)
+            {
+                Vector3 v3 = PointList[i] + new Vector3(0, he, 0);
                 vectors.Add(v3);
-                normals.Add(v3.normalized);
+                normals.Add(PointList[i].normalized);
             }
-
 
 
             for (int i = 0; i < WayNodeCount; i++)
@@ -193,25 +220,70 @@ class BuildingMaker : InfrstructureBehaviour
                 indices.Add(idx4);
 
             }
-
             mf.mesh.vertices = vectors.ToArray();
             mf.mesh.triangles = indices.ToArray();
             mf.mesh.RecalculateNormals();
 
-
             GenerateController.Spheres[buildCount].AddComponent<BoxCollider>();
             GenerateController.Spheres[buildCount].AddComponent<Rigidbody>();
             GenerateController.Spheres[buildCount].GetComponent<Rigidbody>().freezeRotation = true;
-            
             GenerateController.Spheres[buildCount].AddComponent<coliderMix>();
 
-            GenerateController.Spheres[buildCount].GetComponent<coliderMix>().OrgColor = tempC;
             buildCount = buildCount + 1;
-            yield return null;
         }
 
-    }
 
+
+
+
+
+
+
+        string SavePath = "C:/Users/user/Desktop/asd/OSM-Spline-Unity/osmunity/osm-unity/Assets";
+        //save gameobj to .obj file
+        List<GameObject> BuildingList = new List<GameObject>();
+        for (int i = 0; i < GenerateController.Spheres.Length; i++)
+        {
+            BuildingList.Add(GenerateController.Spheres[i]);
+        }
+        //Saving
+        MeshSimplify.MeshSimplify.saveasobj(BuildingList, SavePath, "0");
+
+        for (int i = 0; i < GenerateController.Spheres.Length; i++)
+        {
+            string ObjFileName = SavePath + "/Way_" + i + ".obj";
+            string EXEPath = SavePath + "/Plugins/fillhole.exe";
+            Process.Start(EXEPath, ObjFileName);
+        }
+        //read new objfile
+
+
+
+        for (int i = 0; i < BuildingList.Count; i++)
+        {
+            string MatsavePath = SavePath + "/" + BuildingList[i].name + ".mat";
+            MatsavePath = FileUtil.GetProjectRelativePath(MatsavePath);
+            AssetDatabase.CreateAsset(BuildingList[i].GetComponent<MeshRenderer>().sharedMaterial, MatsavePath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            string ObjsavePath = SavePath + "/" + BuildingList[i].name + ".obj";
+            AssetDatabase.Refresh();
+            ObjsavePath = FileUtil.GetProjectRelativePath(ObjsavePath);
+            ////Bind Mesh
+            BuildingList[i].GetComponent<MeshFilter>().sharedMesh = (Mesh)AssetDatabase.LoadAssetAtPath(ObjsavePath, typeof(Mesh));
+
+            //create model.prefab
+            string PresavePath = SavePath + "/" + BuildingList[i].name + ".prefab";
+            PresavePath = FileUtil.GetProjectRelativePath(PresavePath);
+            PrefabUtility.SaveAsPrefabAsset(BuildingList[i], PresavePath);
+            AssetDatabase.Refresh();
+            //DestroyImmediate(outputgameobj[i]);
+            BuildingList[i] = AssetDatabase.LoadAssetAtPath(PresavePath, typeof(GameObject)) as GameObject;
+        }
+
+
+    }
 
     private void Update()
     {

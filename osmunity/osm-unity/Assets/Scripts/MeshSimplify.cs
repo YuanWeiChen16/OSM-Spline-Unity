@@ -33,7 +33,7 @@ namespace MeshSimplify
             for (int i = 0; i < obj.Count; i++)
             {
                 path = tmppath;
-                path = path + "/" + obj[i].name + ".obj";                                                                            // 副檔名需為.obj
+                path = path + "/" + obj[i].name + ".obj";                                 // 副檔名需為.obj
                 ObjExporter.ObjExporter.MeshToFile(obj[i].GetComponent<MeshFilter>(), path);
             }
         }
