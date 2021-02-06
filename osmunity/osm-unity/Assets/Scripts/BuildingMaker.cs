@@ -7,12 +7,14 @@ using UnityEngine.Profiling;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using static MercatorProjection;
+using mattatz.Utils;
+using mattatz.Triangulation2DSystem;
 
 class BuildingMaker : InfrstructureBehaviour
 {
 
-    [DllImport("FillHole", CharSet = CharSet.Ansi)]
-    private static extern int FH([MarshalAs(UnmanagedType.LPStr)]string fliename);
+    //[DllImport("FillHole", CharSet = CharSet.Ansi)]
+    //private static extern int FH([MarshalAs(UnmanagedType.LPStr)]string fliename);
 
     public Material building;
 
@@ -122,18 +124,19 @@ class BuildingMaker : InfrstructureBehaviour
 
             MeshFilter mf = GenerateController.Spheres[buildCount].AddComponent<MeshFilter>();
             MeshRenderer mr = GenerateController.Spheres[buildCount].AddComponent<MeshRenderer>();
-
+            //vivid color
             mr.material.shader = Shader.Find("Standard");
             Color tempC = new Color();
             tempC.r = 0.15f * (float)(buildCount % 7);
             tempC.g = 0.25f * (float)(buildCount % 5);
             tempC.b = 0.12f * (float)(buildCount % 9);
             mr.material.color = tempC;
-
+            //mesh prepar 
             List<Vector3> vectors = new List<Vector3>();
             List<Vector3> normals = new List<Vector3>();
             List<int> indices = new List<int>();
             float he = way.Height;
+            //if no height data
             if (way.Height < 1.0f)
             {
                 he = 1.0f;
@@ -142,10 +145,9 @@ class BuildingMaker : InfrstructureBehaviour
 
             //turn shape to nClock
 
-            //find X Max 
+            //find X Max point
             int MaxXID = -1;
             float MaxX = -1;
-
             for (int i = 0; i < WayNodeCount; i++)
             {
                 OsmNode p1 = map.nodes[way.NodeIDs[i]];
@@ -167,6 +169,7 @@ class BuildingMaker : InfrstructureBehaviour
             float VCross = VNow.x * VLast.z - VNow.z * VLast.x;
             //Right Point sList
             Vector3[] PointList = new Vector3[WayNodeCount];
+            //make ring right
             if (VCross > 0)
             {
                 for (int i = 0; i < WayNodeCount; i++)
@@ -185,6 +188,35 @@ class BuildingMaker : InfrstructureBehaviour
                 }
             }
 
+            //delaunay roof
+            List<Vector2> points = new List<Vector2>();
+
+            //add point if point too close split it
+            for (int i = 0; i < WayNodeCount; i++)
+            {
+                int cutTime = 2;
+                int nextPoint = (i + 1) % WayNodeCount;
+                Vector3 nodedistence = PointList[nextPoint] - PointList[i];
+                if (nodedistence.magnitude > 1f)
+                {                   
+                    nodedistence = nodedistence / (float)cutTime;
+                    for (int j = 0; j < cutTime; j++)
+                    {
+                        points.Add(new Vector2(PointList[i].x + nodedistence.x * (float)j, PointList[i].z + nodedistence.z * (float)j));
+                    }
+                }
+                else
+                {
+                    points.Add(new Vector2(PointList[i].x, PointList[i].z));
+                }
+            }
+            //Delaunay
+            points = Utils2D.Constrain(points, 0.8f);
+            Polygon2D polygon = Polygon2D.Contour(points.ToArray());
+            Triangulation2D triangulation = new Triangulation2D(polygon, 20f);
+            //Delaunay Done
+            Mesh roofmesh = triangulation.Build();
+
             // lower Point Ring
             for (int i = 0; i < WayNodeCount; i++)
             {
@@ -198,7 +230,6 @@ class BuildingMaker : InfrstructureBehaviour
                 vectors.Add(v3);
                 normals.Add(PointList[i].normalized);
             }
-
 
             for (int i = 0; i < WayNodeCount; i++)
             {
@@ -220,25 +251,37 @@ class BuildingMaker : InfrstructureBehaviour
                 indices.Add(idx4);
 
             }
+
+            //add roof add floor 
+            Vector3[] roofV = roofmesh.vertices;
+            int[] roofIndex = roofmesh.triangles;
+            int Pcount = vectors.Count;
+            //triangles
+            for (int i = 0; i < roofIndex.Length; i++)
+            {
+                indices.Add((int)(roofIndex[i] + Pcount));
+            }
+            //vertrics
+            for (int i = 0; i < roofV.Length; i++)
+            {
+                vectors.Add(new Vector3(roofV[i].x, he, roofV[i].y));
+            }
+
+
+
             mf.mesh.vertices = vectors.ToArray();
             mf.mesh.triangles = indices.ToArray();
             mf.mesh.RecalculateNormals();
 
+
             GenerateController.Spheres[buildCount].AddComponent<BoxCollider>();
             GenerateController.Spheres[buildCount].AddComponent<Rigidbody>();
             GenerateController.Spheres[buildCount].GetComponent<Rigidbody>().freezeRotation = true;
-            GenerateController.Spheres[buildCount].AddComponent<coliderMix>();
+            //GenerateController.Spheres[buildCount].AddComponent<coliderMix>();
 
             buildCount = buildCount + 1;
+
         }
-
-
-
-
-
-
-
-
         string SavePath = "C:/Users/user/Desktop/asd/OSM-Spline-Unity/osmunity/osm-unity/Assets";
         //save gameobj to .obj file
         List<GameObject> BuildingList = new List<GameObject>();
@@ -249,38 +292,39 @@ class BuildingMaker : InfrstructureBehaviour
         //Saving
         MeshSimplify.MeshSimplify.saveasobj(BuildingList, SavePath, "0");
 
-        for (int i = 0; i < GenerateController.Spheres.Length; i++)
-        {
-            string ObjFileName = SavePath + "/Way_" + i + ".obj";
-            string EXEPath = SavePath + "/Plugins/fillhole.exe";
-            Process.Start(EXEPath, ObjFileName);
-        }
+
+        //for (int i = 0; i < GenerateController.Spheres.Length; i++)
+        //{
+        //    string ObjFileName = SavePath + "/Way_" + i + ".obj";
+        //    string EXEPath = SavePath + "/Plugins/fillhole.exe";
+        //    Process.Start(EXEPath, ObjFileName);            
+        //}
         //read new objfile
 
 
 
-        for (int i = 0; i < BuildingList.Count; i++)
-        {
-            string MatsavePath = SavePath + "/" + BuildingList[i].name + ".mat";
-            MatsavePath = FileUtil.GetProjectRelativePath(MatsavePath);
-            AssetDatabase.CreateAsset(BuildingList[i].GetComponent<MeshRenderer>().sharedMaterial, MatsavePath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+        //for (int i = 0; i < BuildingList.Count; i++)
+        //{
+        //    string MatsavePath = SavePath + "/" + BuildingList[i].name + ".mat";
+        //    MatsavePath = FileUtil.GetProjectRelativePath(MatsavePath);
+        //    AssetDatabase.CreateAsset(BuildingList[i].GetComponent<MeshRenderer>().sharedMaterial, MatsavePath);
+        //    AssetDatabase.SaveAssets();
+        //    AssetDatabase.Refresh();
 
-            string ObjsavePath = SavePath + "/" + BuildingList[i].name + ".obj";
-            AssetDatabase.Refresh();
-            ObjsavePath = FileUtil.GetProjectRelativePath(ObjsavePath);
-            ////Bind Mesh
-            BuildingList[i].GetComponent<MeshFilter>().sharedMesh = (Mesh)AssetDatabase.LoadAssetAtPath(ObjsavePath, typeof(Mesh));
+        //    string ObjsavePath = SavePath + "/" + BuildingList[i].name + ".obj";
+        //    AssetDatabase.Refresh();
+        //    ObjsavePath = FileUtil.GetProjectRelativePath(ObjsavePath);
+        //    ////Bind Mesh
+        //    BuildingList[i].GetComponent<MeshFilter>().sharedMesh = (Mesh)AssetDatabase.LoadAssetAtPath(ObjsavePath, typeof(Mesh));
 
-            //create model.prefab
-            string PresavePath = SavePath + "/" + BuildingList[i].name + ".prefab";
-            PresavePath = FileUtil.GetProjectRelativePath(PresavePath);
-            PrefabUtility.SaveAsPrefabAsset(BuildingList[i], PresavePath);
-            AssetDatabase.Refresh();
-            //DestroyImmediate(outputgameobj[i]);
-            BuildingList[i] = AssetDatabase.LoadAssetAtPath(PresavePath, typeof(GameObject)) as GameObject;
-        }
+        //    //create model.prefab
+        //    string PresavePath = SavePath + "/" + BuildingList[i].name + ".prefab";
+        //    PresavePath = FileUtil.GetProjectRelativePath(PresavePath);
+        //    PrefabUtility.SaveAsPrefabAsset(BuildingList[i], PresavePath);
+        //    AssetDatabase.Refresh();
+        //    //DestroyImmediate(outputgameobj[i]);
+        //    BuildingList[i] = AssetDatabase.LoadAssetAtPath(PresavePath, typeof(GameObject)) as GameObject;
+        //}
 
 
     }
